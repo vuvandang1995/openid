@@ -1,0 +1,10 @@
+fullnameOverride: openid-mysql
+image: mysql
+imageTag: 5.7.28
+mysqlDatabase: openid
+persistence:
+  enabled: false
+mysqlUser: openid
+# this is dev password, please don't use it on staging or prod
+mysqlRootPassword: 'openid'
+mysqlPassword: 'openid'

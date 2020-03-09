@@ -1,0 +1,79 @@
+image:
+  repository: dangvv1995/openid
+  tag: m-b86f8359
+
+resources:
+  requests:
+    memory: 512Mi
+    cpu: 25m
+  limits:
+    memory: 512Mi
+    cpu: 300m
+
+deploys:
+- name: app
+  prometheusScrapeEnabled: 'true'
+  replicasCount: 1
+  service:
+    type: ClusterIP
+    containerPort: 
+      http: 5000
+      metrics: 5001
+    health:
+      live: /
+      ready: /
+
+- name: daphne
+  replicasCount: 1
+  service:
+    type: ClusterIP
+    containerPort:
+      http: 8001
+    port: 8001
+    health:
+      live: /
+      ready: /
+  command: ["daphne","-b","0.0.0.0","-p", "8001","openid.asgi:application"]
+    
+
+jobs:
+- name: db-migration
+  args:
+  - python
+  - manage.py
+  - migrate
+
+ingress:
+  enabled: false
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+    kubernetes.io/ingress.class: nginx
+    kubernetes.io/tls-acme: 'true'
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+    nginx.ingress.kubernetes.io/enable-cors: 'true'
+    nginx.ingress.kubernetes.io/cors-allow-methods: GET, PUT, POST, DELETE, PATCH,
+      OPTIONS
+    nginx.ingress.kubernetes.io/cors-allow-origin: '*'
+  tls:
+  - secretName: openid-api-tls
+    hosts:
+    - openid.develop.devopsapis.cf
+  rules:
+  - host: openid.develop.devopsapis.cf
+    paths:
+    - path: /
+      serviceName: openid-api-app
+    - path: /metrics
+      serviceName: openid-api-app
+      servicePort: metrics
+
+env:
+  REDIS_HOST: openid-redis-master
+  DB_NAME: openid
+  DB_USER: openid
+  DB_PASS: openid
+  DB_HOST: openid-mysql
+  CELERY_BROKER_URL: redis://openid-redis-master
+  CELERY_RESULT_BACKEND: redis://openid-redis-master
+

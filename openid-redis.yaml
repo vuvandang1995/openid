@@ -1,0 +1,9 @@
+fullnameOverride: openid-redis
+usePassword: false
+cluster:
+  enabled: false
+master:
+  persistence:
+    enabled: false
+persistence:
+  enabled: false
