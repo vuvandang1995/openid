@@ -2,7 +2,7 @@ imagePullSecrets:
   - name: gcr-json-key
 
 image:
-  repository: registry.gitlab.com/vais/product/sohoa-backend
+  repository: gcr.io/momovn-test/dvc-gateway
   tag: "dcacae52"
 
 resources:
