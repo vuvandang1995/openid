@@ -1,0 +1,245 @@
+imagePullSecrets:
+  - name: gcr-json-key
+
+image:
+  repository: gcr.io/momovn-test/momo-backend-v2/backend-pig
+  tag: "78d3c615"
+
+resources:
+  requests:
+    memory: 512Mi
+    cpu: 200m
+  limits:
+    memory: 1Gi
+    cpu: 300m
+
+deploys:
+- name: app
+  prometheusScrapeEnabled: 'false'
+  replicasCount: 1
+  mountConfigMaps:
+    - name: golden-pig
+      mountPath: /backend-pig/etc/
+  annotations:
+    configmap.reloader.stakater.com/reload: "golden-pig"
+  # service:
+  #   type: ClusterIP
+  #   containerPort: 
+  #     http: 8080
+  #   health:
+  #     live: /health/live
+  #     ready: /health/ready
+    
+
+configMap:
+  backend-pig.cfg.json: |
+    {
+      "isProduction": false,
+      "enableMetrics": true,
+      "disableDefMetrics": true,
+      "metricsStatsbee": true,
+      "loadCacheConfig": {
+        "loadAppCache": false,
+        "loadCashBackCache": true
+      },
+      "ignoreMetrics": [
+        "task"
+      ],
+      "statsdConfig": {
+        "enable": true,
+        "host": "172.16.13.12",
+        "port": 8125,
+        "flavor": "TELEGRAF"
+      },
+      "oracleCfgUrac": {
+        "provider_class": "io.vertx.ext.jdbc.spi.impl.HikariCPDataSourceProvider",
+        "maximumPoolSize": 1,
+        "driver_class": "oracle.jdbc.pool.OracleDataSource",
+        "driver_oracle_flyway": "oracle.jdbc.OracleDriver",
+        "port": 1521,
+        "jdbcUrl": "jdbc:oracle:thin:@//172.16.13.10:1521/umarketuat",
+        "username": "soap_admin",
+        "password": "1234567",
+        "flyway_db_migration_path": "oracle/urac/test",
+        "poolName": "be.u.ora"
+      },
+      "oracleCfgHtpp": {
+        "provider_class": "io.vertx.ext.jdbc.spi.impl.HikariCPDataSourceProvider",
+        "maximumPoolSize": 1,
+        "driver_class": "oracle.jdbc.pool.OracleDataSource",
+        "driver_oracle_flyway": "oracle.jdbc.OracleDriver",
+        "port": 1521,
+        "jdbcUrl": "jdbc:oracle:thin:@//172.16.13.10:1521/umarketuat",
+        "username": "mis_admin",
+        "password": "1234567",
+        "poolName": "be.htpp.ora"
+      },
+      "oracleCfgEnvDb": {
+        "provider_class": "io.vertx.ext.jdbc.spi.impl.HikariCPDataSourceProvider",
+        "maximumPoolSize": 1,
+        "driver_class": "oracle.jdbc.pool.OracleDataSource",
+        "driver_oracle_flyway": "oracle.jdbc.OracleDriver",
+        "port": 1521,
+        "jdbcUrl": "jdbc:oracle:thin:@//172.16.13.10:1521/umarketuat",
+        "username": "soap_admin",
+        "password": "1234567",
+        "flyway_db_migration_path": "oracle/envdb/test",
+        "poolName": "be.c.ora"
+      },
+      "oracleCfgStandby": {
+        "provider_class": "io.vertx.ext.jdbc.spi.impl.HikariCPDataSourceProvider",
+        "maximumPoolSize": 1,
+        "driver_class": "oracle.jdbc.pool.OracleDataSource",
+        "driver_oracle_flyway": "oracle.jdbc.OracleDriver",
+        "port": 1521,
+        "jdbcUrl": "jdbc:oracle:thin:@//172.16.13.10:1521/umarketuat",
+        "username": "soap_admin",
+        "password": "1234567",
+        "flyway_db_migration_path": "oracle/urac/test",
+        "poolName": "be.std.ora"
+      },
+      "redisCacheCfg": {
+        "host": "172.16.13.22",
+        "port": 6379,
+        "auth": "mservice"
+      },
+      "redisCfg": {
+        "host": "172.16.13.22",
+        "port": 6379,
+        "auth": "mservice"
+      },
+      "redSpiCfg": {
+        "redisHost": "172.16.13.11",
+        "redisPort": 6379,
+        "redisPrefix": "redspi1"
+      },
+      "redisCoreCfg": {
+        "host": "172.16.4.20",
+        "port": 6379,
+        "auth": "MS3rv1ce"
+      },
+      "elasticCfgs": [
+        {
+          "hostName": "172.16.13.22",
+          "port": 9200,
+          "scheme": "http"
+        }
+      ],
+      "verticles": [
+        {
+          "name": "mservice.backend.pigbase.verticles.RabbitRpcClientVerticle",
+          "block": false,
+          "address": "RabbitRpcClientVerticle",
+          "local": true,
+          "instances": 1
+        },
+        {
+          "name": "mservice.backend.pig.verticles.RedisSubEventVerticle",
+          "block": false,
+          "address": "RedisSubEventVerticle",
+          "local": true,
+          "instances": 1
+        },
+        {
+          "name": "mservice.backend.pigbase.verticles.PubSubVerticle",
+          "block": false,
+          "address": "PubSubVerticle",
+          "local": true,
+          "instances": 1
+        },
+        {
+          "name": "mservice.backend.pig.verticles.PigDispatcherVerticle",
+          "block": false,
+          "address": "PigDispatcherVerticle",
+          "local": true,
+          "instances": 1
+        },
+        {
+          "name": "mservice.backend.pig.verticles.PigVerticle",
+          "block": false,
+          "address": "PigVerticle",
+          "local": true,
+          "instances": 1
+        }
+      ]
+    }
+  pig-config.cfg.json: |
+    {
+      "internal_rapid_mq": {
+        "hosts": [
+          "172.16.9.166",
+          "172.16.9.167"
+        ],
+        "port": 5672,
+        "username": "test",
+        "password": "test",
+        "isEnabled": true,
+        "end_point": "ha_qu_be_clientdispatcher"
+      },
+      "gift_rapid_mq": {
+        "hosts": [
+          "172.16.14.26",
+          "172.16.14.27"
+        ],
+        "port": 5672,
+        "username": "promotion",
+        "password": "pr0m0ti0n@2017",
+        "isEnabled": true,
+        "end_point": "ha_qu_be_gift_api"
+      },
+      "PubSubVerticle_mq": {
+        "hosts": [
+          "172.16.9.166",
+          "172.16.9.167"
+        ],
+        "port": 5672,
+        "username": "test",
+        "password": "test",
+        "isEnabled": true,
+        "end_point": "ha_qu_be_pub_sub"
+      }
+    }
+  pig-log4j2.xml: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Configuration status="ALL" monitorInterval="30">
+        <Appenders>
+            <Console name="Console" target="SYSTEM_OUT">
+                <PatternLayout
+                        pattern="%highlight{[%level]} %cyan{%d{yyyy-MM-dd HH:mm:ss.SSS}} %magenta{[%c{1}%notEmpty{|%marker}]} %highlight{%msg%n%ex}{INFO=normal, DEBUG=normal, TRACE=normal}"/>
+            </Console>
+
+            <RollingFile name="pig-log" fileName="logs/pig.log"
+                        filePattern="logs/pig-%d{yyyy-MM-dd}.log.zip">
+                <PatternLayout
+                        pattern="%highlight{[%level]} %cyan{%d{yyyy-MM-dd HH:mm:ss.SSS}} %magenta{[%c{1}%notEmpty{|%marker}]} %highlight{%msg%n%ex}{INFO=normal, DEBUG=normal, TRACE=normal}"/>
+                <Policies>
+                    <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                </Policies>
+            </RollingFile>
+
+            <RollingFile name="error-log" fileName="logs/pig-error.log"
+                        filePattern="logs/pig-error-%d{yyyy-MM-dd}.log.zip">
+                <PatternLayout pattern="[%level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%c{1}%notEmpty{|%marker}]%msg%n%ex"/>
+                <ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="DENY"/>
+                <Policies>
+                    <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                </Policies>
+            </RollingFile>
+
+        </Appenders>
+
+        <Loggers>
+            <Root level="INFO">
+                <AppenderRef ref="Console"/>
+                <AppenderRef ref="pig-log"/>
+                <AppenderRef ref="error-log"/>
+            </Root>
+
+        </Loggers>
+
+    </Configuration>
+
+ingress:
+  enabled: false
+
+env: {}
