@@ -21,7 +21,7 @@ deploys:
     - name: golden-pig
       mountPath: /backend-pig/etc/
   annotations:
-    configmap.reloader.stakater.com/reload: "golden-pig"
+    configmap.reloader.stakater.com/reload: golden-pig-${artifacts['version']}
   # service:
   #   type: ClusterIP
   #   containerPort: 
